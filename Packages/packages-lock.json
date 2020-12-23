@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.legustavinho.legendary-tools-common": {
+      "version": "https://github.com/LeGustaVinho/legendary-tools-common.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "3152612e31abb6c1d0d1bf964924f997e6b7458b"
+    },
     "com.unity.ext.nunit": {
       "version": "1.0.6",
       "depth": 1,
