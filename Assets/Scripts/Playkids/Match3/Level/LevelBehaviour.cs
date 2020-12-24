@@ -15,6 +15,12 @@ namespace Playkids.Match3
         {
             Board = new Board(BoardConfig);
 
+            UpdatePatternDebug();
+        }
+
+        [Button]
+        public void UpdatePatternDebug()
+        {
             matches = Board.FindPatterns();
         }
     }

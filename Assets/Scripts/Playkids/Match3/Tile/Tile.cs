@@ -74,16 +74,43 @@ namespace Playkids.Match3
             if (Type != TileType.Blocked)
             {
                 GravitationalChild = board.GetTileAt(Position + gravityVector[GravityDirection]);
+                if (GravitationalChild != null)
+                {
+                    GravitationalChild.GravitationalParent = this;
+                }
             }
         }
 
-        public void Release()
+        public bool  TryGeneratePiece()
+        {
+            if (PieceGenerator != null && CanPutPiece)
+            {
+                Piece newPiece = PieceGenerator.GeneratePiece();
+                board.MovePieceTo(newPiece, this);
+                return true;
+            }
+            return false;
+        }
+        
+        public Piece ReleasePiece()
         {
             if (HasPiece)
             {
+                Piece releasedPiece = Piece;
                 Piece.Tile = null;
                 Piece = null;
+
+                return releasedPiece;
             }
+
+            return null;
+        }
+        
+        public Piece DestroyPiece()
+        {
+            Piece releasedPiece = ReleasePiece();
+            releasedPiece.OnDestroy();
+            return releasedPiece;
         }
     }
 }

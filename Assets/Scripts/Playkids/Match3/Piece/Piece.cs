@@ -24,5 +24,10 @@ namespace Playkids.Match3
         {
             Tile = tile;
         }
+
+        public virtual void OnDestroy()
+        {
+            
+        }
     }
 }
