@@ -36,7 +36,10 @@ namespace Playkids.Match3
         public Piece Piece;
         public bool HasPiece => Piece != null;
 
-        public Tile GravitationalNeighbor;
+        public bool CanPutPiece => Type != TileType.Blocked;
+
+        public Tile GravitationalChild;
+        public Tile GravitationalParent;
         public readonly List<Tile> Neighbors = new List<Tile>();
 
         private Board board;
@@ -70,7 +73,7 @@ namespace Playkids.Match3
 
             if (Type != TileType.Blocked)
             {
-                GravitationalNeighbor = board.GetTileAt(Position + gravityVector[GravityDirection]);
+                GravitationalChild = board.GetTileAt(Position + gravityVector[GravityDirection]);
             }
         }
 

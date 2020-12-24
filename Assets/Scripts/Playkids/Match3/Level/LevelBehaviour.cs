@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 
@@ -8,9 +9,13 @@ namespace Playkids.Match3
         public BoardConfig BoardConfig;
         public Board Board;
 
+        public PatternSearchResult matches;
+
         private void Start()
         {
             Board = new Board(BoardConfig);
+
+            matches = Board.FindPatterns();
         }
     }
 }

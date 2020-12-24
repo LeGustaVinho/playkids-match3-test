@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Playkids.Match3
 {
-    [CreateAssetMenu(fileName = "PiecesDB", menuName = "Match3/Create PiecesDB")]
+    [CreateAssetMenu(fileName = "PiecesDB", menuName = "Match3/DBs/Create PiecesDB")]
     [SingletonScriptableObject(UseAsset = true)]
     public class PiecesDB : SingletonSerializedScriptableObject<PiecesDB>
     {

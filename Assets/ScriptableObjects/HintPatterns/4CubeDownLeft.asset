@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 551edff8270c4ffa84d884111eae8bbd, type: 3}
-  m_Name: New MatchPatternConfig
+  m_Name: 4CubeDownLeft
   m_EditorClassIdentifier: 
   serializationData:
     SerializedFormat: 2
@@ -23,16 +23,37 @@ MonoBehaviour:
     SerializationNodes:
     - Name: Pattern
       Entry: 7
-      Data: 0|Playkids.Match3.Foo[,], Assembly-CSharp
+      Data: 0|System.Boolean[,], mscorlib
     - Name: 
       Entry: 12
-      Data: 0
+      Data: 6
     - Name: ranks
       Entry: 1
-      Data: 0|0
+      Data: 2|3
+    - Name: 
+      Entry: 5
+      Data: true
+    - Name: 
+      Entry: 5
+      Data: true
+    - Name: 
+      Entry: 5
+      Data: false
+    - Name: 
+      Entry: 5
+      Data: true
+    - Name: 
+      Entry: 5
+      Data: false
+    - Name: 
+      Entry: 5
+      Data: true
     - Name: 
       Entry: 13
       Data: 
     - Name: 
       Entry: 8
       Data: 
+  Score: 4
+  IsHint: 1
+  HintSwapCoords: []

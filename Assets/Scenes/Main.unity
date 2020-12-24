@@ -256,7 +256,10 @@ MonoBehaviour:
     - Name: Board
       Entry: 6
       Data: 
-  BoardConfig: {fileID: 11400000, guid: bb0eb657be8e4b1489513ab0f4fc31b2, type: 2}
+    - Name: matches
+      Entry: 6
+      Data: 
+  BoardConfig: {fileID: 11400000, guid: 7485eb04c8eb1f2498ae007a2b3f4c01, type: 2}
 --- !u!4 &958710589
 Transform:
   m_ObjectHideFlags: 0
