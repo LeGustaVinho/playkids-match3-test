@@ -10,6 +10,7 @@ namespace Playkids.Match3
     public class Board
     {
         [ShowInInspector] public BoardConfig Config { private set; get; }
+        public int MaxShuffles = 5;
 
         [ShowInInspector] private readonly Tile[][] tiles;
 
@@ -60,11 +61,16 @@ namespace Playkids.Match3
 
         public Tile GetTileAt(Vector2Int position)
         {
-            if (position.x >= 0 && position.x < tiles.Length)
+            return GetTileAt(position.x, position.y);
+        }
+        
+        public Tile GetTileAt(int x, int y)
+        {
+            if (x >= 0 && x < tiles.Length)
             {
-                if (position.y >= 0 && position.y < tiles[position.x].Length)
+                if (y >= 0 && y < tiles[x].Length)
                 {
-                    return tiles[position.x][position.y];
+                    return tiles[x][y];
                 }
             }
 
@@ -174,22 +180,62 @@ namespace Playkids.Match3
             return tiles;
         }
 
-        [Button]
-        public void RunBoardPhases()
+        public bool Swap(Tile t1, Tile t2)
         {
+            Piece piece1 = t1.ReleasePiece();
+            if (piece1 == null) return false;
+            
+            Piece piece2 = t2.ReleasePiece();
+            if (piece2 == null) return false;
+
+            if (!t1.CanPutPiece || !t2.CanPutPiece)
+            {
+                return false;
+            }
+
+            return MovePieceTo(piece1, t2) && MovePieceTo(piece2, t1);
+        }
+
+        [Button]
+        public void Swap(Vector2Int coords1, Vector2Int coords2)
+        {
+            Tile t1 = GetTileAt(coords1);
+            Tile t2 = GetTileAt(coords2);
+
+            Swap(t1, t2);
+        }
+
+        [Button]
+        public List<BoardChangeLogEntry> RunBoardPhases()
+        {
+            List<BoardChangeLogEntry> allBoardChanges = new List<BoardChangeLogEntry>();
             List<BoardChangeLogEntry> patternResolveChanges = PhasePatternSearch();
+
+            if (patternResolveChanges == null) return null;
+            
+            allBoardChanges.AddRange(patternResolveChanges);
+            allBoardChanges.Add(new BoardChangeLogEntry(BoardChangeAction.PhaseTransition));
             do
             {
                 List<BoardChangeLogEntry> gravityChanges;
                 do
                 {
                     gravityChanges = PhaseGravity();
+                    allBoardChanges.AddRange(gravityChanges);
+                    allBoardChanges.Add(new BoardChangeLogEntry(BoardChangeAction.PhaseTransition));
                 } 
                 while (gravityChanges.Count > 0);
                 
+                allBoardChanges.Add(new BoardChangeLogEntry(BoardChangeAction.PhaseTransition));
+                
                 patternResolveChanges = PhasePatternSearch();
+                if (patternResolveChanges == null) return null;
+                
+                allBoardChanges.AddRange(patternResolveChanges);
             } 
             while (patternResolveChanges.Count > 0);
+
+            return allBoardChanges;
         }
         
         [Button]
@@ -204,7 +250,18 @@ namespace Playkids.Match3
             }
             else
             {
-                changes.AddRange(ShufflePieces());
+                changes.Add(new BoardChangeLogEntry(BoardChangeAction.BoardShuffle));
+
+                int shuffleCount = 0;
+                do
+                {
+                    changes.Clear();
+                    changes.AddRange(ShufflePieces());
+                    patternSearchResult = FindPatterns();
+                    shuffleCount++;
+                    if (shuffleCount > MaxShuffles) return null;
+                } 
+                while (patternSearchResult.TotalCount == 0);
             }
             
             return changes;
@@ -249,10 +306,23 @@ namespace Playkids.Match3
 
             foreach (Tile tile in tilesOfPiecesWillFall)
             {
-                Piece releasedPiece = tile.ReleasePiece();
-                if (MovePieceTo(releasedPiece, tile.GravitationalChild))
+                List<Tile> tilesInGravityFlow = new List<Tile>();
+                tilesInGravityFlow.Add(tile);
+                
+                Tile parentGravitationalTile = tile.GravitationalParent;
+                while (parentGravitationalTile != null)
                 {
-                    changes.Add(new BoardChangeLogEntry(tile, tile.GravitationalChild, releasedPiece));
+                    tilesInGravityFlow.Add(parentGravitationalTile);
+                    parentGravitationalTile = parentGravitationalTile.GravitationalParent;
+                }
+
+                foreach (Tile tileInGravityFlow in tilesInGravityFlow)
+                {
+                    Piece releasedPiece = tileInGravityFlow.ReleasePiece();
+                    if (MovePieceTo(releasedPiece, tileInGravityFlow.GravitationalChild))
+                    {
+                        changes.Add(new BoardChangeLogEntry(tileInGravityFlow, tileInGravityFlow.GravitationalChild, releasedPiece));
+                    }
                 }
             }
 

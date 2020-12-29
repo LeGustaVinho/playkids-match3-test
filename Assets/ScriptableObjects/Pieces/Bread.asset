@@ -24,3 +24,4 @@ MonoBehaviour:
   Category: 0
   Type: 4
   MatchingWhitelist: 04000000
+  Image: {fileID: 21300000, guid: 9dd65fabbd6673b469f41f744b7490f9, type: 3}

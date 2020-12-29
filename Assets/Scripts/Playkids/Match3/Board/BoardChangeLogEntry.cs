@@ -5,6 +5,8 @@ namespace Playkids.Match3
         PieceCreation,
         PieceMove,
         PieceDestroy,
+        BoardShuffle,
+        PhaseTransition,
     }
     
     public class BoardChangeLogEntry
@@ -26,6 +28,11 @@ namespace Playkids.Match3
         {
             ToTile = toTile;
             Piece = piece;
+            Action = action;
+        }
+        
+        public BoardChangeLogEntry(BoardChangeAction action)
+        {
             Action = action;
         }
     }

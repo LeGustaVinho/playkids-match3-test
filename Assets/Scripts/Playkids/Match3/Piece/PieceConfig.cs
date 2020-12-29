@@ -10,5 +10,6 @@ namespace Playkids.Match3
         public PieceCategory Category;
         public PieceType Type;
         public List<PieceType> MatchingWhitelist = new List<PieceType>();
+        public Sprite Image;
     }
 }

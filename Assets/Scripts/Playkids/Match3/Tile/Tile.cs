@@ -81,7 +81,7 @@ namespace Playkids.Match3
             }
         }
 
-        public bool  TryGeneratePiece()
+        public bool TryGeneratePiece()
         {
             if (PieceGenerator != null && CanPutPiece)
             {
