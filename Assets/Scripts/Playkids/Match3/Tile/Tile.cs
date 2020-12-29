@@ -40,7 +40,7 @@ namespace Playkids.Match3
 
         public Tile GravitationalChild;
         public Tile GravitationalParent;
-        public readonly List<Tile> Neighbors = new List<Tile>();
+        public readonly Dictionary<Vector2Int, Tile> Neighbors = new Dictionary<Vector2Int, Tile>();
 
         private Board board;
 
@@ -67,7 +67,7 @@ namespace Playkids.Match3
                 Tile neighbor = board.GetTileAt(Position + neighborsVector);
                 if (neighbor != null)
                 {
-                    Neighbors.Add(neighbor);
+                    Neighbors.Add(neighborsVector, neighbor);
                 }
             }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Playkids.Match3
@@ -22,6 +23,9 @@ namespace Playkids.Match3
         public RectTransform RectTransform;
         public Transform Transform;
 
+        private bool pieceIsBeingMoved;
+        private PointerEventData pointerEntryPoint;
+        
         public void Initialize(Piece piece)
         {
             Piece = piece;

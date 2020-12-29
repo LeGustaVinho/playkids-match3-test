@@ -23,15 +23,21 @@ namespace Playkids.Match3
         [BoxGroup("Board Settings"), ShowIf("@!AutoZoom")]
         public int PreferredCellSize = 256;
 
-        [BoxGroup("Animation Settings")] public int PieceMoveDuration = 1;
+        [BoxGroup("Animation Settings")] public float PieceMoveDuration = 1;
         [BoxGroup("Animation Settings")] public Ease PieceMoveEase = Ease.InCubic;
 
         [BoxGroup("Debug")] public BoardConfig StartBoard;
         [BoxGroup("Debug"), ShowInInspector] private Board board;
+        [BoxGroup("Debug")] public List<BoardChangeLogEntry> lastBoardChanges;
         private TileBehaviour[][] tileBehaviours;
-        private Dictionary<Guid, PieceBehaviour> piecesViewLookUp = new Dictionary<Guid, PieceBehaviour>();
 
+        private bool acceptingInputs = true;
+        private Dictionary<Guid, PieceBehaviour> piecesViewLookUp = new Dictionary<Guid, PieceBehaviour>();
+        private Coroutine boardPhasesRoutine;
+        private Coroutine swapPiecesRoutine;
+        
         private static string TILE_NAME_FORMAT = "[Group] - Tile [{0},{1}]";
+        private static string PIECE_NAME_FORMAT = "[Group] - Piece {0} # {1}";
 
         public Vector2Int CalculateCellSize(Vector2Int boardSize)
         {
@@ -103,121 +109,9 @@ namespace Playkids.Match3
             return null;
         }
 
-        public IEnumerator RunBoardPhases()
+        public void RunBoardPhases()
         {
-            yield return new WaitForSeconds(2); 
-            
-            List<BoardChangeLogEntry> boardChanges = board.RunBoardPhases();
-            if (boardChanges == null)
-            {
-                Debug.LogError("Shuffle limit exceed");
-                yield break;
-            }
-
-            List<IEnumerator> routines = new List<IEnumerator>();
-            List<Tweener> tweeners = new List<Tweener>();
-            
-            List<PieceBehaviour> destroyedPiecesInPhase = new List<PieceBehaviour>();
-            List<Tuple<PieceBehaviour, TileBehaviour>> movedPiecesInPhase =
-                new List<Tuple<PieceBehaviour, TileBehaviour>>();
-
-            foreach (BoardChangeLogEntry boardChange in boardChanges)
-            {
-                switch (boardChange.Action)
-                {
-                    case BoardChangeAction.PieceCreation:
-                    {
-                        TileBehaviour tileView = GetTileAt(boardChange.ToTile.Position);
-                        if (tileView != null)
-                        {
-                            PieceBehaviour newPieceView = CreatePiece(boardChange.Piece, tileView);
-                            piecesViewLookUp.Add(newPieceView.Piece.GUID, newPieceView);
-                            routines.Add(newPieceView.PlayAnimationRoutine(boardChange.Action));
-                        }
-                        break;
-                    }
-                    case BoardChangeAction.PieceMove:
-                    {
-                        if (piecesViewLookUp.TryGetValue(boardChange.Piece.GUID, out PieceBehaviour pieceView))
-                        {
-                            TileBehaviour fromTile = GetTileAt(boardChange.FromTile.Position);
-                            TileBehaviour toTile = GetTileAt(boardChange.ToTile.Position);
-
-                            if (pieceView.IsPlaced)
-                            {
-                                pieceView.TileView.ReleasePiece();
-                                movedPiecesInPhase.Add(new Tuple<PieceBehaviour, TileBehaviour>(pieceView, toTile));
-                                TweenerCore<Vector3, Vector3, VectorOptions> moveTween = pieceView.Transform
-                                    .DOMove(toTile.Transform.position, PieceMoveDuration)
-                                    .SetEase(PieceMoveEase);
-                                moveTween.Play();
-                                tweeners.Add(moveTween);
-                            }
-                            else
-                            {
-                                Debug.LogError("Bug");
-                            }
-                        }
-
-                        break;
-                    }
-                    case BoardChangeAction.PieceDestroy:
-                    {
-                        if (piecesViewLookUp.TryGetValue(boardChange.Piece.GUID, out PieceBehaviour pieceView))
-                        {
-                            pieceView.TileView.ReleasePiece();
-                            routines.Add(pieceView.PlayAnimationRoutine(boardChange.Action));
-                            destroyedPiecesInPhase.Add(pieceView);
-                        }
-
-                        break;
-                    }
-                    case BoardChangeAction.BoardShuffle:
-                        break;
-                    case BoardChangeAction.PhaseTransition:
-                    {
-                        int completed = 0;
-                        while (completed != routines.Count)
-                        {
-                            completed = 0;
-                            foreach (IEnumerator routine in routines)
-                            {
-                                if (!routine.MoveNext())
-                                {
-                                    completed++;
-                                }
-                            }
-                            yield return null;
-                        }
-
-                        bool allTweensDone = true;
-                        foreach (Tweener tweener in tweeners)
-                        {
-                            if (tweener.IsPlaying())
-                            {
-                                allTweensDone = false;
-                                break;
-                            }
-                        }
-
-                        yield return new WaitUntil(() => allTweensDone);
-
-                        foreach (PieceBehaviour destroyedPieceInPhase in destroyedPiecesInPhase)
-                        {
-                            Destroy(destroyedPieceInPhase.gameObject);
-                        }
-                        destroyedPiecesInPhase.Clear();
-
-                        foreach (Tuple<PieceBehaviour, TileBehaviour> movedPieceInPhase in movedPiecesInPhase)
-                        {
-                            movedPieceInPhase.Item2.PutPiece(movedPieceInPhase.Item1);
-                        }
-                        movedPiecesInPhase.Clear();
-
-                        break;
-                    }
-                }
-            }
+            boardPhasesRoutine = StartCoroutine(RunBoardPhasesRoutine());
         }
 
         public TileBehaviour CreateTile(Tile tile, bool autoCreatePiece = true)
@@ -241,15 +135,230 @@ namespace Playkids.Match3
             newPieceBehaviour.Initialize(piece);
             newPieceBehaviour.transform.localScale = TilePrefab.transform.localScale;
             newPieceBehaviour.transform.localPosition = PiecePrefab.transform.position;
+            newPieceBehaviour.name = string.Format(PIECE_NAME_FORMAT, newPieceBehaviour.Piece.Config.Type,
+                newPieceBehaviour.Piece.GUID);
+            
             tileParent.PutPiece(newPieceBehaviour);
 
             return newPieceBehaviour;
         }
 
+        public void TrySwapPiece(TileBehaviour fromTile, TileBehaviour toTile)
+        {
+            if (acceptingInputs)
+            {
+                swapPiecesRoutine = StartCoroutine(TrySwapPieceRoutine(fromTile, toTile));
+            }
+        }
+        
+        private IEnumerator RunBoardPhasesRoutine()
+        {
+            yield return new WaitForEndOfFrame();
+            
+            acceptingInputs = false;
+            List<IEnumerator> routines = new List<IEnumerator>();
+            List<Tweener> tweeners = new List<Tweener>();
+            List<PieceBehaviour> destroyedPiecesInPhase = new List<PieceBehaviour>();
+            List<Tuple<PieceBehaviour, TileBehaviour>> movedPiecesInPhase =
+                new List<Tuple<PieceBehaviour, TileBehaviour>>();
+            HashSet<PieceBehaviour> unattachedPieces = new HashSet<PieceBehaviour>();
+
+            List<BoardChangeLogEntry> boardChanges = board.RunBoardPhases();
+            lastBoardChanges = boardChanges;
+
+            foreach (BoardChangeLogEntry boardChange in boardChanges)
+            {
+                switch (boardChange.Action)
+                {
+                    case BoardChangeAction.PieceCreation:
+                    {
+                        TileBehaviour tileView = GetTileAt(boardChange.ToTile.Position);
+                        if (tileView != null)
+                        {
+                            PieceBehaviour newPieceView = CreatePiece(boardChange.Piece, tileView);
+                            piecesViewLookUp.Add(newPieceView.Piece.GUID, newPieceView);
+                            routines.Add(newPieceView.PlayAnimationRoutine(boardChange.Action));
+                        }
+                        break;
+                    }
+                    case BoardChangeAction.PieceMove:
+                    {
+                        if (piecesViewLookUp.TryGetValue(boardChange.Piece.GUID, out PieceBehaviour pieceView))
+                        {
+                            TileBehaviour fromTile = GetTileAt(boardChange.FromTile.Position);
+                            TileBehaviour toTile = GetTileAt(boardChange.ToTile.Position);
+
+                            if (toTile.HasPiece)
+                            {
+                                unattachedPieces.Add(toTile.ReleasePiece());
+                            }
+
+                            if (pieceView.IsPlaced)
+                            {
+                                pieceView.TileView.ReleasePiece();
+                            }
+
+                            movedPiecesInPhase.Add(new Tuple<PieceBehaviour, TileBehaviour>(pieceView, toTile));
+                                TweenerCore<Vector3, Vector3, VectorOptions> moveTween = pieceView.Transform
+                                    .DOMove(toTile.Transform.position, PieceMoveDuration)
+                                    .SetEase(PieceMoveEase);
+                            moveTween.Play();
+                            tweeners.Add(moveTween);
+                        }
+
+                        break;
+                    }
+                    case BoardChangeAction.PieceDestroy:
+                    {
+                        if (piecesViewLookUp.TryGetValue(boardChange.Piece.GUID, out PieceBehaviour pieceView))
+                        {
+                            pieceView.TileView.ReleasePiece();
+                            routines.Add(pieceView.PlayAnimationRoutine(boardChange.Action));
+                            destroyedPiecesInPhase.Add(pieceView);
+                        }
+
+                        break;
+                    }
+                    case BoardChangeAction.BoardShuffle:
+                    {
+                        //TODO: Show shuffling feedback
+                        Debug.Log("Shuffling board");
+                        break;
+                    }
+                    case BoardChangeAction.PhaseTransition:
+                    {
+                        //Wait all tasks
+                        int completed = 0;
+                        while (completed != routines.Count + tweeners.Count)
+                        {
+                            completed = 0;
+                            foreach (IEnumerator routine in routines)
+                            {
+                                if (!routine.MoveNext())
+                                {
+                                    completed++;
+                                }
+                            }
+
+                            foreach (Tweener tweener in tweeners)
+                            {
+                                if (!tweener.IsPlaying())
+                                {
+                                    completed++;
+                                }
+                            }
+                            
+                            yield return null;
+                        }
+
+                        //Clean board destroying pieces
+                        foreach (PieceBehaviour destroyedPieceInPhase in destroyedPiecesInPhase)
+                        {
+                            Destroy(destroyedPieceInPhase.gameObject);
+                        }
+                        destroyedPiecesInPhase.Clear();
+
+                        //ReAttach moved pieces to board
+                        foreach (Tuple<PieceBehaviour, TileBehaviour> movedPieceInPhase in movedPiecesInPhase)
+                        {
+                            movedPieceInPhase.Item2.PutPiece(movedPieceInPhase.Item1);
+
+                            if (unattachedPieces.Contains(movedPieceInPhase.Item1))
+                            {
+                                unattachedPieces.Remove(movedPieceInPhase.Item1);
+                            }
+                        }
+                        movedPiecesInPhase.Clear();
+                        
+                        //ReAttach pieces that were detached from the board during the movement
+                        foreach (PieceBehaviour unattachedPiece in unattachedPieces)
+                        {
+                            TileBehaviour tileView = GetTileAt(unattachedPiece.Piece.Tile.Position);
+                            tileView.PutPiece(unattachedPiece);
+                        }
+
+                        break;
+                    }
+                    case BoardChangeAction.BoardShuffleLimitReached:
+                    {
+                        //TODO: Player lost this match
+                        Debug.Log("Shuffle limit reached");
+                        break;
+                    }
+                }
+            }
+            acceptingInputs = true;
+
+            // if (!ValidateBoard())
+            // {
+            //     Debug.Break();
+            //     Debug.LogError("Board visual desync");
+            // }
+        }
+        
+        private IEnumerator TrySwapPieceRoutine(TileBehaviour fromTile, TileBehaviour toTile)
+        {
+            Sequence swapSequence = DOTween.Sequence();
+            bool swapResult = board.Swap(fromTile.Tile, toTile.Tile);
+
+            PieceBehaviour piece1View = fromTile.ReleasePiece();
+            PieceBehaviour piece2View = toTile.ReleasePiece();
+
+            swapSequence.Insert(0,
+                piece1View.transform.DOMove(toTile.Transform.position, PieceMoveDuration).SetEase(PieceMoveEase));
+            swapSequence.Insert(0,
+                piece2View.transform.DOMove(fromTile.Transform.position, PieceMoveDuration).SetEase(PieceMoveEase));
+            swapSequence.AppendInterval(1);
+
+            if (!swapResult)
+            {
+                swapSequence.Insert(2,
+                    piece1View.transform.DOMove(fromTile.Transform.position, PieceMoveDuration).SetEase(PieceMoveEase));
+                swapSequence.Insert(2,
+                    piece2View.transform.DOMove(toTile.Transform.position, PieceMoveDuration).SetEase(PieceMoveEase));
+            }
+
+            while (swapSequence.IsPlaying())
+            {
+                yield return null;
+            }
+
+            if (swapResult)
+            {
+                fromTile.PutPiece(piece2View);
+                toTile.PutPiece(piece1View);
+
+                RunBoardPhases();
+            }
+            else
+            {
+                fromTile.PutPiece(piece1View);
+                toTile.PutPiece(piece2View);
+            }
+        }
+
+        private bool ValidateBoard()
+        {
+            for (int x = 0; x < board.Config.BoardSize.x; x++)
+            {
+                for (int y = 0; y < board.Config.BoardSize.y; y++)
+                {
+                    Tile currentTile = board.GetTileAt(x, y);
+
+                    if (tileBehaviours[x][y].PieceView.Piece != currentTile.Piece)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+        
         private void Start()
         {
             Initialize(new Board(StartBoard));
-            StartCoroutine(RunBoardPhases());
+            RunBoardPhases();
         }
     }
 }

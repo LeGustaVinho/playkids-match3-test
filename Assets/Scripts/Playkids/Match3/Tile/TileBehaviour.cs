@@ -20,11 +20,11 @@ namespace Playkids.Match3
         public RectTransform RectTransform;
         public Transform Transform;
 
-        private BoardBehaviour boardView;
+        public BoardBehaviour BoardView { private set; get; }
 
         public void Initialize(BoardBehaviour boardView, Tile tile)
         {
-            this.boardView = boardView;
+            this.BoardView = boardView;
             this.Tile = tile;
             
             RectTransform = GetComponent<RectTransform>();
@@ -38,6 +38,7 @@ namespace Playkids.Match3
                 pieceView.BindTile(this);
                 PieceView = pieceView;
                 pieceView.Transform.SetParent(PieceParent);
+                pieceView.Transform.localPosition = BoardView.PiecePrefab.transform.position;
                 
                 return true;
             }
@@ -52,7 +53,7 @@ namespace Playkids.Match3
                 PieceBehaviour releasedPiece = PieceView;
                 PieceView.BindTile(null);
                 PieceView = null;
-                releasedPiece.Transform.SetParent(boardView.BoardArea);
+                releasedPiece.Transform.SetParent(BoardView.BoardArea);
 
                 return releasedPiece;
             }

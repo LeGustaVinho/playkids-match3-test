@@ -610,6 +610,7 @@ GameObject:
   - component: {fileID: 1893958438}
   - component: {fileID: 1893958437}
   - component: {fileID: 1893958436}
+  - component: {fileID: 1893958439}
   m_Layer: 5
   m_Name: '[Grid] - Board'
   m_TagString: Untagged
@@ -663,9 +664,9 @@ MonoBehaviour:
   PiecePrefab: {fileID: 6772062166759982107, guid: 8a35fc2dc4a2eb7479fb01705cf2eaf9, type: 3}
   AutoZoom: 1
   PreferredCellSize: 256
-  PieceMoveDuration: 1
+  PieceMoveDuration: 0.5
   PieceMoveEase: 8
-  StartBoard: {fileID: 11400000, guid: edc112a4b12628a4a870087f66eb6980, type: 2}
+  StartBoard: {fileID: 11400000, guid: 62693da92de313e41b813aec8ad89b5d, type: 2}
 --- !u!114 &1893958437
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -698,3 +699,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1893958434}
   m_CullTransparentMesh: 0
+--- !u!114 &1893958439
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1893958434}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30495ce1706b67542813540824afb5e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GraphicRaycaster: {fileID: 999125840}
+  EventSystem: {fileID: 343094087}

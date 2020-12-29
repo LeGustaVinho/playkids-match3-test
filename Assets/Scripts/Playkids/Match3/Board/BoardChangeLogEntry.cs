@@ -1,3 +1,5 @@
+using Sirenix.OdinInspector;
+
 namespace Playkids.Match3
 {
     public enum BoardChangeAction
@@ -6,14 +8,17 @@ namespace Playkids.Match3
         PieceMove,
         PieceDestroy,
         BoardShuffle,
+        BoardShuffleLimitReached,
         PhaseTransition,
     }
     
     public class BoardChangeLogEntry
     {
-        public Tile FromTile { private set; get; }
-        public Tile ToTile { private set; get; }
+        public Tile FromTile;
+        public Tile ToTile;
+        [ShowInInspector]
         public Piece Piece { private set; get; }
+        [ShowInInspector]
         public BoardChangeAction Action { private set; get; }
 
         public BoardChangeLogEntry(Tile fromTile, Tile toTile, Piece piece)

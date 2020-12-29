@@ -63,7 +63,7 @@ namespace Playkids.Match3
         {
             return GetTileAt(position.x, position.y);
         }
-        
+
         public Tile GetTileAt(int x, int y)
         {
             if (x >= 0 && x < tiles.Length)
@@ -79,11 +79,18 @@ namespace Playkids.Match3
 
         public bool MovePieceTo(Piece piece, Tile tile)
         {
-            if (!piece.IsPlaced && !tile.HasPiece && tile.CanPutPiece)
+            try
             {
-                piece.Tile = tile;
-                tile.Piece = piece;
-                return true;
+                if (!piece.IsPlaced && !tile.HasPiece && tile.CanPutPiece)
+                {
+                    piece.Tile = tile;
+                    tile.Piece = piece;
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
             }
 
             return false;
@@ -182,22 +189,38 @@ namespace Playkids.Match3
 
         public bool Swap(Tile t1, Tile t2)
         {
-            Piece piece1 = t1.ReleasePiece();
-            if (piece1 == null) return false;
-            
-            Piece piece2 = t2.ReleasePiece();
-            if (piece2 == null) return false;
-
-            if (!t1.CanPutPiece || !t2.CanPutPiece)
+            if (!t1.HasPiece || !t2.HasPiece || !t1.CanPutPiece || !t2.CanPutPiece)
             {
                 return false;
             }
 
-            return MovePieceTo(piece1, t2) && MovePieceTo(piece2, t1);
+            Piece piece1 = t1.ReleasePiece();
+            Piece piece2 = t2.ReleasePiece();
+
+            bool pieceWasMoved = MovePieceTo(piece1, t2) && MovePieceTo(piece2, t1);
+
+            if (pieceWasMoved)
+            {
+                PatternSearchResult patterns = FindPatterns();
+                if (patterns.Matchs.Count > 0)
+                {
+                    return true;
+                }
+
+                //Rollback swap
+                piece2 = t1.ReleasePiece();
+                piece1 = t2.ReleasePiece();
+                MovePieceTo(piece1, t1);
+                MovePieceTo(piece2, t2);
+
+                return false;
+            }
+
+            return false;
         }
 
         [Button]
-        public void Swap(Vector2Int coords1, Vector2Int coords2)
+        public void DebugSwap(Vector2Int coords1, Vector2Int coords2)
         {
             Tile t1 = GetTileAt(coords1);
             Tile t2 = GetTileAt(coords2);
@@ -211,10 +234,10 @@ namespace Playkids.Match3
             List<BoardChangeLogEntry> allBoardChanges = new List<BoardChangeLogEntry>();
             List<BoardChangeLogEntry> patternResolveChanges = PhasePatternSearch();
 
-            if (patternResolveChanges == null) return null;
-            
             allBoardChanges.AddRange(patternResolveChanges);
             allBoardChanges.Add(new BoardChangeLogEntry(BoardChangeAction.PhaseTransition));
+            bool shuffleLimitReached = false;
+            
             do
             {
                 List<BoardChangeLogEntry> gravityChanges;
@@ -223,21 +246,33 @@ namespace Playkids.Match3
                     gravityChanges = PhaseGravity();
                     allBoardChanges.AddRange(gravityChanges);
                     allBoardChanges.Add(new BoardChangeLogEntry(BoardChangeAction.PhaseTransition));
-                } 
-                while (gravityChanges.Count > 0);
-                
+                } while (gravityChanges.Count > 0);
+
                 allBoardChanges.Add(new BoardChangeLogEntry(BoardChangeAction.PhaseTransition));
-                
+
                 patternResolveChanges = PhasePatternSearch();
-                if (patternResolveChanges == null) return null;
                 
-                allBoardChanges.AddRange(patternResolveChanges);
-            } 
-            while (patternResolveChanges.Count > 0);
+                if (patternResolveChanges.Exists(item => item.Action == BoardChangeAction.BoardShuffleLimitReached))
+                {
+                    if (shuffleLimitReached)
+                    {
+                        allBoardChanges.Add(new BoardChangeLogEntry(BoardChangeAction.BoardShuffleLimitReached));
+                        return allBoardChanges;
+                    }
+                    
+                    shuffleLimitReached = true;
+                }
+                else
+                {
+                    shuffleLimitReached = false;
+                    allBoardChanges.AddRange(patternResolveChanges);
+                }
+
+            } while (patternResolveChanges.Count > 0);
 
             return allBoardChanges;
         }
-        
+
         [Button]
         public List<BoardChangeLogEntry> PhasePatternSearch()
         {
@@ -256,14 +291,20 @@ namespace Playkids.Match3
                 do
                 {
                     changes.Clear();
+                    if (shuffleCount > MaxShuffles)
+                    {
+                        changes.Add(new BoardChangeLogEntry(BoardChangeAction.BoardShuffleLimitReached));
+                        return changes;
+                    }
+
+                    changes.Add(new BoardChangeLogEntry(BoardChangeAction.BoardShuffle));
                     changes.AddRange(ShufflePieces());
+                    changes.Add(new BoardChangeLogEntry(BoardChangeAction.PhaseTransition));
                     patternSearchResult = FindPatterns();
                     shuffleCount++;
-                    if (shuffleCount > MaxShuffles) return null;
-                } 
-                while (patternSearchResult.TotalCount == 0);
+                } while (patternSearchResult.TotalCount == 0);
             }
-            
+
             return changes;
         }
 
@@ -308,7 +349,7 @@ namespace Playkids.Match3
             {
                 List<Tile> tilesInGravityFlow = new List<Tile>();
                 tilesInGravityFlow.Add(tile);
-                
+
                 Tile parentGravitationalTile = tile.GravitationalParent;
                 while (parentGravitationalTile != null)
                 {
@@ -321,7 +362,8 @@ namespace Playkids.Match3
                     Piece releasedPiece = tileInGravityFlow.ReleasePiece();
                     if (MovePieceTo(releasedPiece, tileInGravityFlow.GravitationalChild))
                     {
-                        changes.Add(new BoardChangeLogEntry(tileInGravityFlow, tileInGravityFlow.GravitationalChild, releasedPiece));
+                        changes.Add(new BoardChangeLogEntry(tileInGravityFlow, tileInGravityFlow.GravitationalChild,
+                            releasedPiece));
                     }
                 }
             }
@@ -344,12 +386,62 @@ namespace Playkids.Match3
         public List<BoardChangeLogEntry> ShufflePieces()
         {
             List<BoardChangeLogEntry> changes = new List<BoardChangeLogEntry>();
+            Dictionary<Piece, BoardChangeLogEntry> uniquePieceMoves = new Dictionary<Piece, BoardChangeLogEntry>();
 
-            //TODO
-            
+            int maxShuffleInteractions = Config.BoardSize.x * Config.BoardSize.y;
+            for (int i = 0; i < maxShuffleInteractions; i++)
+            {
+                Vector2Int fromPosition = new Vector2Int(Random.Range(0, Config.BoardSize.x),
+                    Random.Range(0, Config.BoardSize.y));
+                Vector2Int toPosition = new Vector2Int(Random.Range(0, Config.BoardSize.x),
+                    Random.Range(0, Config.BoardSize.y));
+
+                Tile fromTile = GetTileAt(fromPosition);
+                Tile toTile = GetTileAt(toPosition);
+
+                if (fromTile != null && toTile != null)
+                {
+                    if (fromTile.HasPiece && toTile.HasPiece && fromTile.CanPutPiece && toTile.CanPutPiece &&
+                        fromTile != toTile)
+                    {
+                        Piece fromPiece = fromTile.ReleasePiece();
+                        Piece toPiece = toTile.ReleasePiece();
+
+                        MovePieceTo(fromPiece, toTile);
+                        MovePieceTo(toPiece, fromTile);
+
+                        if (uniquePieceMoves.ContainsKey(fromPiece))
+                        {
+                            uniquePieceMoves[fromPiece].ToTile = toTile;
+                        }
+                        else
+                        {
+                            uniquePieceMoves.Add(fromPiece, new BoardChangeLogEntry(fromTile, toTile, fromPiece));
+                        }
+
+                        if (uniquePieceMoves.ContainsKey(toPiece))
+                        {
+                            uniquePieceMoves[toPiece].ToTile = fromTile;
+                        }
+                        else
+                        {
+                            uniquePieceMoves.Add(toPiece, new BoardChangeLogEntry(toTile, fromTile, toPiece));
+                        }
+                    }
+                }
+            }
+
+            foreach (KeyValuePair<Piece, BoardChangeLogEntry> uniquePieceMovePair in uniquePieceMoves)
+            {
+                if (uniquePieceMovePair.Value.FromTile != uniquePieceMovePair.Value.ToTile)
+                {
+                    changes.Add(uniquePieceMovePair.Value);
+                }
+            }
+
             return changes;
         }
-        
+
         private void CachePatterns()
         {
             List<PiecePatternConfig> sortedMatchPatterns =
