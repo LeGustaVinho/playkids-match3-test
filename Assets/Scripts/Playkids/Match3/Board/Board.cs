@@ -50,7 +50,7 @@ namespace Playkids.Match3
                 {
                     tiles[x][y].Initialize(this);
 
-                    if (!tiles[x][y].HasPiece)
+                    if (!tiles[x][y].HasPiece && config.AutoGeneratePieceInEmpty)
                     {
                         Piece newPiece = GenerateRandomBasicPiece();
                         MovePieceTo(newPiece, tiles[x][y]);
@@ -359,10 +359,6 @@ namespace Playkids.Match3
                             changes.Add(new BoardChangeLogEntry(tileInGravityFlow, tileInGravityFlow.GravitationalChild,
                                 releasedPiece));
                         }
-                    }
-                    else
-                    {
-                        Debug.LogError("Bug");
                     }
                 }
             }

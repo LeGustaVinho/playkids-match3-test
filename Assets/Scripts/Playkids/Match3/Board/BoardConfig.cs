@@ -33,6 +33,8 @@ namespace Playkids.Match3
         [TableMatrix, ShowIf("ViewMode", BoardViewType.PieceGenerator)]
         public PieceGeneratorConfig[,] BoardPieceGeneratorMatrix = new PieceGeneratorConfig[3, 3];
 
+        public bool AutoGeneratePieceInEmpty = true;
+        
         public Tile[][] Board
         {
             get

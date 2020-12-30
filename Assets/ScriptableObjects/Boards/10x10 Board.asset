@@ -1283,4 +1283,4 @@ MonoBehaviour:
       Entry: 8
       Data: 
   BoardSize: {x: 10, y: 10}
-  ViewMode: 3
+  ViewMode: 0

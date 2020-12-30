@@ -125,7 +125,7 @@ namespace Playkids.Match3
             newTileBehaviour.name = string.Format(TILE_NAME_FORMAT, tile.Position.x, tile.Position.y);
             newTileBehaviour.transform.localScale = TilePrefab.transform.localScale;
 
-            if (autoCreatePiece)
+            if (autoCreatePiece && tile.Piece != null)
             {
                 CreatePiece(tile.Piece, newTileBehaviour);
             }
