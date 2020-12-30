@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 986baeebbd924cf59156159039daf37e, type: 3}
-  m_Name: 5x5 Board - Spaced Gravity Test
+  m_Name: 4x4 Board Shuffle Test
   m_EditorClassIdentifier: 
   serializationData:
     SerializedFormat: 2
@@ -27,37 +27,10 @@ MonoBehaviour:
       Data: 0|Playkids.Match3.TileType[,], Assembly-CSharp
     - Name: 
       Entry: 12
-      Data: 25
+      Data: 16
     - Name: ranks
       Entry: 1
-      Data: 5|5
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
+      Data: 4|4
     - Name: 
       Entry: 3
       Data: 0
@@ -117,37 +90,10 @@ MonoBehaviour:
       Data: 1|Playkids.Match3.GravityDirection[,], Assembly-CSharp
     - Name: 
       Entry: 12
-      Data: 25
+      Data: 16
     - Name: ranks
       Entry: 1
-      Data: 5|5
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
+      Data: 4|4
     - Name: 
       Entry: 3
       Data: 0
@@ -207,85 +153,58 @@ MonoBehaviour:
       Data: 2|Playkids.Match3.PieceType[,], Assembly-CSharp
     - Name: 
       Entry: 12
-      Data: 25
+      Data: 16
     - Name: ranks
       Entry: 1
-      Data: 5|5
+      Data: 4|4
     - Name: 
       Entry: 3
-      Data: 0
+      Data: 1
     - Name: 
       Entry: 3
-      Data: 0
+      Data: 5
     - Name: 
       Entry: 3
-      Data: 0
+      Data: 2
     - Name: 
       Entry: 3
-      Data: 0
+      Data: 6
     - Name: 
       Entry: 3
-      Data: 0
+      Data: 2
     - Name: 
       Entry: 3
-      Data: 0
+      Data: 6
     - Name: 
       Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
+      Data: 3
     - Name: 
       Entry: 3
       Data: 7
     - Name: 
       Entry: 3
-      Data: 0
+      Data: 3
     - Name: 
       Entry: 3
       Data: 7
     - Name: 
       Entry: 3
-      Data: 7
+      Data: 4
     - Name: 
       Entry: 3
-      Data: 0
+      Data: 1
     - Name: 
       Entry: 3
-      Data: 0
+      Data: 4
     - Name: 
       Entry: 3
-      Data: 0
+      Data: 1
     - Name: 
       Entry: 3
-      Data: 0
+      Data: 5
     - Name: 
       Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
-    - Name: 
-      Entry: 3
-      Data: 0
+      Data: 2
     - Name: 
       Entry: 13
       Data: 
@@ -297,31 +216,13 @@ MonoBehaviour:
       Data: 3|Playkids.Match3.PieceGeneratorConfig[,], Assembly-CSharp
     - Name: 
       Entry: 12
-      Data: 25
+      Data: 16
     - Name: ranks
       Entry: 1
-      Data: 5|5
+      Data: 4|4
     - Name: 
       Entry: 10
       Data: 0
-    - Name: 
-      Entry: 6
-      Data: 
-    - Name: 
-      Entry: 6
-      Data: 
-    - Name: 
-      Entry: 6
-      Data: 
-    - Name: 
-      Entry: 6
-      Data: 
-    - Name: 
-      Entry: 10
-      Data: 0
-    - Name: 
-      Entry: 6
-      Data: 
     - Name: 
       Entry: 6
       Data: 
@@ -344,9 +245,6 @@ MonoBehaviour:
       Entry: 6
       Data: 
     - Name: 
-      Entry: 6
-      Data: 
-    - Name: 
       Entry: 10
       Data: 0
     - Name: 
@@ -359,14 +257,8 @@ MonoBehaviour:
       Entry: 6
       Data: 
     - Name: 
-      Entry: 6
-      Data: 
-    - Name: 
       Entry: 10
       Data: 0
-    - Name: 
-      Entry: 6
-      Data: 
     - Name: 
       Entry: 6
       Data: 
@@ -382,6 +274,6 @@ MonoBehaviour:
     - Name: 
       Entry: 8
       Data: 
-  BoardSize: {x: 5, y: 5}
+  BoardSize: {x: 4, y: 4}
   ViewMode: 2
-  AutoGeneratePieceInEmpty: 0
+  AutoGeneratePieceInEmpty: 1

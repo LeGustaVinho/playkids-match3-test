@@ -372,7 +372,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &958710588
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -394,13 +394,38 @@ MonoBehaviour:
     PrefabModificationsReferencedUnityObjects: []
     PrefabModifications: []
     SerializationNodes:
+    - Name: beforeShuffle
+      Entry: 6
+      Data: 
+    - Name: afterShuffle
+      Entry: 6
+      Data: 
     - Name: Board
       Entry: 6
+      Data: 
+    - Name: Changes
+      Entry: 7
+      Data: 0|System.Collections.Generic.List`1[[Playkids.Match3.BoardChangeLogEntry,
+        Assembly-CSharp]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 0
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
       Data: 
     - Name: matches
       Entry: 6
       Data: 
-  BoardConfig: {fileID: 11400000, guid: 7485eb04c8eb1f2498ae007a2b3f4c01, type: 2}
+    - Name: TileGetter
+      Entry: 6
+      Data: 
+    - Name: availableTiles
+      Entry: 6
+      Data: 
+  BoardConfig: {fileID: 11400000, guid: 62693da92de313e41b813aec8ad89b5d, type: 2}
 --- !u!4 &958710589
 Transform:
   m_ObjectHideFlags: 0
@@ -634,7 +659,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -136.7002}
+  m_AnchoredPosition: {x: 0, y: -136.69922}
   m_SizeDelta: {x: 0, y: -273.4707}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1893958436
@@ -657,14 +682,17 @@ MonoBehaviour:
     Prefab: {fileID: 0}
     PrefabModificationsReferencedUnityObjects: []
     PrefabModifications: []
-    SerializationNodes: []
+    SerializationNodes:
+    - Name: lastBoardChanges
+      Entry: 6
+      Data: 
   BoardArea: {fileID: 1893958435}
   GridLayoutGroup: {fileID: 1893958437}
   TilePrefab: {fileID: 3590412175766927814, guid: d0761b9a24c929141839a058e8d8b870, type: 3}
   PiecePrefab: {fileID: 6772062166759982107, guid: 8a35fc2dc4a2eb7479fb01705cf2eaf9, type: 3}
   AutoZoom: 1
   PreferredCellSize: 256
-  PieceMoveDuration: 0.5
+  PieceMoveDuration: 0.3
   PieceMoveEase: 8
   StartBoard: {fileID: 11400000, guid: 62693da92de313e41b813aec8ad89b5d, type: 2}
 --- !u!114 &1893958437

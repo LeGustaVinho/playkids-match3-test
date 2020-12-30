@@ -47,6 +47,7 @@ namespace Playkids.Match3
             return false;
         }
 
+        [Button]
         public PieceBehaviour ReleasePiece()
         {
             if (HasPiece)

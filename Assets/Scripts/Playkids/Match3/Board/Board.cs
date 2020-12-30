@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using LegendaryTools;
 using Sirenix.OdinInspector;
 using Sirenix.Utilities;
 using UnityEngine;
@@ -225,10 +226,15 @@ namespace Playkids.Match3
         public List<BoardChangeLogEntry> RunBoardPhases()
         {
             List<BoardChangeLogEntry> allBoardChanges = new List<BoardChangeLogEntry>();
-            List<BoardChangeLogEntry> patternResolveChanges = PhasePatternSearch();
+            List<BoardChangeLogEntry> patternResolveChanges = PhasePatternSearch(true);
 
             allBoardChanges.AddRange(patternResolveChanges);
-            allBoardChanges.Add(new BoardChangeLogEntry(BoardChangeAction.PhaseTransition));
+
+            if (allBoardChanges.Count > 0 && allBoardChanges.Last().Action != BoardChangeAction.PhaseTransition)
+            {
+                allBoardChanges.Add(new BoardChangeLogEntry(BoardChangeAction.PhaseTransition));
+            }
+
             bool shuffleLimitReached = false;
             
             do
@@ -238,10 +244,11 @@ namespace Playkids.Match3
                 {
                     gravityChanges = PhaseGravity();
                     allBoardChanges.AddRange(gravityChanges);
-                    allBoardChanges.Add(new BoardChangeLogEntry(BoardChangeAction.PhaseTransition));
+                    if (allBoardChanges.Count > 0 && allBoardChanges.Last().Action != BoardChangeAction.PhaseTransition)
+                    {
+                        allBoardChanges.Add(new BoardChangeLogEntry(BoardChangeAction.PhaseTransition));
+                    }
                 } while (gravityChanges.Count > 0);
-
-                allBoardChanges.Add(new BoardChangeLogEntry(BoardChangeAction.PhaseTransition));
 
                 patternResolveChanges = PhasePatternSearch();
                 
@@ -267,7 +274,7 @@ namespace Playkids.Match3
         }
 
         [Button]
-        public List<BoardChangeLogEntry> PhasePatternSearch()
+        public List<BoardChangeLogEntry> PhasePatternSearch(bool preventShuffle = false)
         {
             List<BoardChangeLogEntry> changes = new List<BoardChangeLogEntry>();
             PatternSearchResult patternSearchResult = FindPatterns();
@@ -278,8 +285,11 @@ namespace Playkids.Match3
             }
             else
             {
-                changes.Add(new BoardChangeLogEntry(BoardChangeAction.BoardShuffle));
-
+                if (preventShuffle)
+                {
+                    return changes;
+                }
+                
                 int shuffleCount = 0;
                 do
                 {
@@ -295,6 +305,12 @@ namespace Playkids.Match3
                     changes.Add(new BoardChangeLogEntry(BoardChangeAction.PhaseTransition));
                     patternSearchResult = FindPatterns();
                     shuffleCount++;
+
+                    if (patternSearchResult.TotalCount == 0)
+                    {
+                        RevertShuffle(changes);
+                    }
+                    
                 } while (patternSearchResult.TotalCount == 0);
             }
 
@@ -404,62 +420,71 @@ namespace Playkids.Match3
         public List<BoardChangeLogEntry> ShufflePieces()
         {
             List<BoardChangeLogEntry> changes = new List<BoardChangeLogEntry>();
-            Dictionary<Piece, BoardChangeLogEntry> uniquePieceMoves = new Dictionary<Piece, BoardChangeLogEntry>();
+            List<Tile> availableTiles = GetAllTilesWithPieces();
 
-            int maxShuffleInteractions = Config.BoardSize.x * Config.BoardSize.y;
-            for (int i = 0; i < maxShuffleInteractions; i++)
+            while (availableTiles.Count > 1)
             {
-                Vector2Int fromPosition = new Vector2Int(Random.Range(0, Config.BoardSize.x),
-                    Random.Range(0, Config.BoardSize.y));
-                Vector2Int toPosition = new Vector2Int(Random.Range(0, Config.BoardSize.x),
-                    Random.Range(0, Config.BoardSize.y));
-
-                Tile fromTile = GetTileAt(fromPosition);
-                Tile toTile = GetTileAt(toPosition);
-
-                if (fromTile != null && toTile != null)
+                if (availableTiles.Count < 2)
                 {
-                    if (fromTile.HasPiece && toTile.HasPiece && fromTile.CanPutPiece && toTile.CanPutPiece &&
-                        fromTile != toTile)
-                    {
-                        Piece fromPiece = fromTile.ReleasePiece();
-                        Piece toPiece = toTile.ReleasePiece();
-
-                        MovePieceTo(fromPiece, toTile);
-                        MovePieceTo(toPiece, fromTile);
-
-                        if (uniquePieceMoves.ContainsKey(fromPiece))
-                        {
-                            uniquePieceMoves[fromPiece].ToTile = toTile;
-                        }
-                        else
-                        {
-                            uniquePieceMoves.Add(fromPiece, new BoardChangeLogEntry(fromTile, toTile, fromPiece));
-                        }
-
-                        if (uniquePieceMoves.ContainsKey(toPiece))
-                        {
-                            uniquePieceMoves[toPiece].ToTile = fromTile;
-                        }
-                        else
-                        {
-                            uniquePieceMoves.Add(toPiece, new BoardChangeLogEntry(toTile, fromTile, toPiece));
-                        }
-                    }
+                    break;
                 }
-            }
 
-            foreach (KeyValuePair<Piece, BoardChangeLogEntry> uniquePieceMovePair in uniquePieceMoves)
-            {
-                if (uniquePieceMovePair.Value.FromTile != uniquePieceMovePair.Value.ToTile)
+                int rndIndex1 = Random.Range(0, availableTiles.Count);
+                Tile tile1 = availableTiles[rndIndex1];
+                Piece piece1 = tile1.ReleasePiece();
+                availableTiles.RemoveAt(rndIndex1);
+                
+                int rndIndex2 = Random.Range(0, availableTiles.Count);
+                Tile tile2 = availableTiles[rndIndex2];
+                Piece piece2 = tile2.ReleasePiece();
+                availableTiles.RemoveAt(rndIndex2);
+
+                if (MovePieceTo(piece1, tile2) && MovePieceTo(piece2, tile1))
                 {
-                    changes.Add(uniquePieceMovePair.Value);
+                    changes.Add(new BoardChangeLogEntry(tile1, tile2, piece1, piece2));
+                }
+                else
+                {
+                    Debug.LogError("Shuffle bug");
                 }
             }
 
             return changes;
         }
 
+        public List<Tile> GetAllTilesWithPieces()
+        {
+            List<Tile> allTiles = new List<Tile>();
+
+            for (int x = 0; x < tiles.Length; x++)
+            {
+                for (int y = 0; y < tiles[x].Length; y++)
+                {
+                    if (tiles[x][y].HasPiece)
+                    {
+                        allTiles.Add(tiles[x][y]);
+                    }
+                }
+            }
+            
+            return allTiles;
+        }
+
+        private void RevertShuffle(List<BoardChangeLogEntry> shuffleChanges)
+        {
+            foreach (BoardChangeLogEntry shuffleChange in shuffleChanges)
+            {
+                if (shuffleChange.Action == BoardChangeAction.PieceMoveShuffle)
+                {
+                    Piece fromPiece = shuffleChange.FromTile.ReleasePiece();
+                    Piece toPiece = shuffleChange.ToTile.ReleasePiece();
+
+                    MovePieceTo(fromPiece, shuffleChange.ToTile);
+                    MovePieceTo(toPiece, shuffleChange.FromTile);
+                }
+            }
+        }
+        
         private void CachePatterns()
         {
             List<PiecePatternConfig> sortedMatchPatterns =
