@@ -22,6 +22,8 @@ namespace Playkids.Match3
 
         [BoxGroup("Board Settings"), ShowIf("@!AutoZoom")]
         public int PreferredCellSize = 256;
+        [BoxGroup("Board Settings")]
+        public Vector2Int CellSize { private set; get; }
 
         [BoxGroup("Animation Settings")] public float PieceMoveDuration = 1;
         [BoxGroup("Animation Settings")] public Ease PieceMoveEase = Ease.InCubic;
@@ -29,12 +31,14 @@ namespace Playkids.Match3
         [BoxGroup("Debug")] public BoardConfig StartBoard;
         [BoxGroup("Debug"), ShowInInspector] private Board board;
         [BoxGroup("Debug")] public List<BoardChangeLogEntry> lastBoardChanges;
+        [BoxGroup("Debug"), ShowInInspector] public Rect BoardRect => BoardArea.rect;
+        
         private TileBehaviour[][] tileBehaviours;
-
         private bool acceptingInputs = true;
         private Dictionary<Guid, PieceBehaviour> piecesViewLookUp = new Dictionary<Guid, PieceBehaviour>();
         private Coroutine boardPhasesRoutine;
         private Coroutine swapPiecesRoutine;
+        
         
         private static string TILE_NAME_FORMAT = "[Group] - Tile [{0},{1}]";
         private static string PIECE_NAME_FORMAT = "[Group] - Piece {0} # {1}";
@@ -44,31 +48,31 @@ namespace Playkids.Match3
             Vector2 gridSpacing = GridLayoutGroup.spacing;
             RectOffset gridPadding = GridLayoutGroup.padding;
             Rect boardRect = BoardArea.rect;
+            float totalSpace = Mathf.Min(boardRect.width, boardRect.height);
 
             float totalSpacingX = (boardSize.x - 1) * gridSpacing.x;
             float totalPaddingX = gridPadding.left + gridPadding.right;
-            float totalFreeWidth = boardRect.width - totalSpacingX - totalPaddingX;
-            float cellSizeX = totalFreeWidth / gridSpacing.x;
+            float totalFreeWidth = totalSpace - totalSpacingX - totalPaddingX;
+            float cellSizeX = totalFreeWidth / boardSize.x;
 
             float totalSpacingY = (boardSize.y - 1) * gridSpacing.y;
             float totalPaddingY = gridPadding.top + gridPadding.bottom;
-            float totalFreeHeight = boardRect.height - totalSpacingY - totalPaddingY;
-            float cellSizeY = totalFreeHeight / gridSpacing.y;
+            float totalFreeHeight = totalSpace - totalSpacingY - totalPaddingY;
+            float cellSizeY = totalFreeHeight / boardSize.y;
 
             int cellSizeMin = Mathf.FloorToInt(Mathf.Min(cellSizeX, cellSizeY));
 
             return new Vector2Int(cellSizeMin, cellSizeMin);
         }
-
+        
         public void Initialize(Board board)
         {
             this.board = board;
             tileBehaviours = new TileBehaviour[board.Config.BoardSize.x][];
+            CellSize = CalculateCellSize(board.Config.BoardSize);
 
             //Setup GridLayoutGroup
-            GridLayoutGroup.cellSize = AutoZoom
-                ? CalculateCellSize(board.Config.BoardSize)
-                : new Vector2(PreferredCellSize, PreferredCellSize);
+            GridLayoutGroup.cellSize = AutoZoom ? CellSize : new Vector2(PreferredCellSize, PreferredCellSize);
             GridLayoutGroup.constraint = GridLayoutGroup.Constraint.FixedRowCount;
             GridLayoutGroup.constraintCount = board.Config.BoardSize.y;
             GridLayoutGroup.startAxis =
@@ -133,8 +137,10 @@ namespace Playkids.Match3
         {
             PieceBehaviour newPieceBehaviour = Instantiate(PiecePrefab, tileParent.PieceParent);
             newPieceBehaviour.Initialize(piece);
-            newPieceBehaviour.transform.localScale = TilePrefab.transform.localScale;
-            newPieceBehaviour.transform.localPosition = PiecePrefab.transform.position;
+            newPieceBehaviour.Transform.localScale = TilePrefab.transform.localScale;
+            newPieceBehaviour.Transform.localPosition = PiecePrefab.transform.position;
+            newPieceBehaviour.RectTransform.sizeDelta = CellSize;
+            
             newPieceBehaviour.name = string.Format(PIECE_NAME_FORMAT, newPieceBehaviour.Piece.Config.Type,
                 newPieceBehaviour.Piece.GUID);
             
@@ -289,11 +295,11 @@ namespace Playkids.Match3
             }
             acceptingInputs = true;
 
-            // if (!ValidateBoard())
-            // {
-            //     Debug.Break();
-            //     Debug.LogError("Board visual desync");
-            // }
+            if (!ValidateBoard())
+            {
+                Debug.Break();
+                Debug.LogError("Board visual desync");
+            }
         }
         
         private IEnumerator TrySwapPieceRoutine(TileBehaviour fromTile, TileBehaviour toTile)

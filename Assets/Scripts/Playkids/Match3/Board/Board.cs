@@ -79,18 +79,11 @@ namespace Playkids.Match3
 
         public bool MovePieceTo(Piece piece, Tile tile)
         {
-            try
+            if (!piece.IsPlaced && !tile.HasPiece && tile.CanPutPiece)
             {
-                if (!piece.IsPlaced && !tile.HasPiece && tile.CanPutPiece)
-                {
-                    piece.Tile = tile;
-                    tile.Piece = piece;
-                    return true;
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
+                piece.Tile = tile;
+                tile.Piece = piece;
+                return true;
             }
 
             return false;
@@ -347,8 +340,7 @@ namespace Playkids.Match3
 
             foreach (Tile tile in tilesOfPiecesWillFall)
             {
-                List<Tile> tilesInGravityFlow = new List<Tile>();
-                tilesInGravityFlow.Add(tile);
+                List<Tile> tilesInGravityFlow = new List<Tile> {tile};
 
                 Tile parentGravitationalTile = tile.GravitationalParent;
                 while (parentGravitationalTile != null)
@@ -359,11 +351,18 @@ namespace Playkids.Match3
 
                 foreach (Tile tileInGravityFlow in tilesInGravityFlow)
                 {
-                    Piece releasedPiece = tileInGravityFlow.ReleasePiece();
-                    if (MovePieceTo(releasedPiece, tileInGravityFlow.GravitationalChild))
+                    if (tileInGravityFlow.HasPiece)
                     {
-                        changes.Add(new BoardChangeLogEntry(tileInGravityFlow, tileInGravityFlow.GravitationalChild,
-                            releasedPiece));
+                        Piece releasedPiece = tileInGravityFlow.ReleasePiece();
+                        if (MovePieceTo(releasedPiece, tileInGravityFlow.GravitationalChild))
+                        {
+                            changes.Add(new BoardChangeLogEntry(tileInGravityFlow, tileInGravityFlow.GravitationalChild,
+                                releasedPiece));
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError("Bug");
                     }
                 }
             }

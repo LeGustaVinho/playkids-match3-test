@@ -39,6 +39,7 @@ namespace Playkids.Match3
                 PieceView = pieceView;
                 pieceView.Transform.SetParent(PieceParent);
                 pieceView.Transform.localPosition = BoardView.PiecePrefab.transform.position;
+                pieceView.RectTransform.sizeDelta = BoardView.CellSize;
                 
                 return true;
             }
