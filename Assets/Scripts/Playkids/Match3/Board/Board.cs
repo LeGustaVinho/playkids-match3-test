@@ -326,43 +326,55 @@ namespace Playkids.Match3
         {
             List<BoardChangeLogEntry> changes = new List<BoardChangeLogEntry>();
             List<Tile> tilesOfPiecesWillFall = new List<Tile>();
-            List<Tile> tilesWithPieceGenerator = new List<Tile>();
+            List<Tile> tilesInGravityFlow = new List<Tile>();
+            Tile[] tilesWithPieceGenerator = FindTilesWithPieceGenerator();
 
+            //Search for tiles that contain a piece that may fall with gravity
             foreach (Tile[] columns in tiles)
             {
                 Tile[] tiles = Array.FindAll(columns,
                     item => item.HasPiece && item.GravitationalChild != null && !item.GravitationalChild.HasPiece &&
                             item.GravitationalChild.CanPutPiece);
-
+            
                 tilesOfPiecesWillFall.AddRange(tiles);
-                tilesWithPieceGenerator.AddRange(Array.FindAll(columns, item => item.PieceGenerator != null));
             }
 
-            foreach (Tile tile in tilesOfPiecesWillFall)
+            //Group the pieces that will fall into gravity together
+            foreach (Tile tileOfPieceWillFall in tilesOfPiecesWillFall)
             {
-                List<Tile> tilesInGravityFlow = new List<Tile> {tile};
-
-                Tile parentGravitationalTile = tile.GravitationalParent;
+                tilesInGravityFlow.Add(tileOfPieceWillFall);
+                
+                Tile parentGravitationalTile = tileOfPieceWillFall.GravitationalParent;
                 while (parentGravitationalTile != null)
                 {
-                    tilesInGravityFlow.Add(parentGravitationalTile);
-                    parentGravitationalTile = parentGravitationalTile.GravitationalParent;
-                }
-
-                foreach (Tile tileInGravityFlow in tilesInGravityFlow)
-                {
-                    if (tileInGravityFlow.HasPiece)
+                    if (parentGravitationalTile.HasPiece)
                     {
-                        Piece releasedPiece = tileInGravityFlow.ReleasePiece();
-                        if (MovePieceTo(releasedPiece, tileInGravityFlow.GravitationalChild))
-                        {
-                            changes.Add(new BoardChangeLogEntry(tileInGravityFlow, tileInGravityFlow.GravitationalChild,
-                                releasedPiece));
-                        }
+                        tilesInGravityFlow.Add(parentGravitationalTile);
+                        parentGravitationalTile = parentGravitationalTile.GravitationalParent;
+                    }
+                    else
+                    {
+                        break;
                     }
                 }
             }
-
+            
+            //Move pieces in gravity flow
+            foreach (Tile tileInGravityFlow in tilesInGravityFlow)
+            {
+                if (tileInGravityFlow.HasPiece)
+                {
+                    Piece releasedPiece = tileInGravityFlow.ReleasePiece();
+                    if (MovePieceTo(releasedPiece, tileInGravityFlow.GravitationalChild))
+                    {
+                        changes.Add(new BoardChangeLogEntry(tileInGravityFlow,
+                            tileInGravityFlow.GravitationalChild,
+                            releasedPiece));
+                    }
+                }
+            }
+            
+            //Try create a piece on tile with piece generator
             foreach (Tile tileWithPieceGenerator in tilesWithPieceGenerator)
             {
                 if (!tileWithPieceGenerator.HasPiece && tileWithPieceGenerator.CanPutPiece)
@@ -376,6 +388,17 @@ namespace Playkids.Match3
             }
 
             return changes;
+        }
+
+        private Tile[] FindTilesWithPieceGenerator()
+        {
+            List<Tile> tilesWithPieceGenerator = new List<Tile>();
+            foreach (Tile[] columns in tiles)
+            {
+                tilesWithPieceGenerator.AddRange(Array.FindAll(columns, item => item.PieceGenerator != null));
+            }
+
+            return tilesWithPieceGenerator.ToArray();
         }
 
         public List<BoardChangeLogEntry> ShufflePieces()
