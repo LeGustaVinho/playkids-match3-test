@@ -265,6 +265,7 @@ namespace Playkids.Match3
                         //ReAttach pieces that were detached from the board during the movement
                         foreach (KeyValuePair<PieceBehaviour, TileBehaviour> piece in movingPieces)
                         {
+                            piece.Value.PutPiece(piece.Key);
 
                             if (touchedPieces.Contains(piece.Key))
                             {
@@ -272,6 +273,11 @@ namespace Playkids.Match3
                             }
                         }
 
+                        if (touchedPieces.Count > 0)
+                        {
+                            Debug.LogError("Touched piece issue");
+                        }
+                        
                         movingPieces.Clear();
                         touchedPieces.Clear();
                         
