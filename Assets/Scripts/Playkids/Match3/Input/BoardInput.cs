@@ -5,9 +5,6 @@ using UnityEngine.UI;
 
 namespace Playkids.Match3
 {
-    /// <summary>
-    /// 
-    /// </summary>
     public class BoardInput : MonoBehaviour
     {
         public GraphicRaycaster GraphicRaycaster;
@@ -25,7 +22,7 @@ namespace Playkids.Match3
             MobileInput();
 #endif
         }
-
+        
         private void DesktopInput()
         {
             if (Input.GetKeyDown(KeyCode.Mouse0))
@@ -74,6 +71,11 @@ namespace Playkids.Match3
             }
         }
 
+        /// <summary>
+        /// Try to get a piece in that position on the screen
+        /// </summary>
+        /// <param name="raycastPosition"></param>
+        /// <returns></returns>
         private PieceBehaviour TryGetPieceWithRaycast(Vector3 raycastPosition)
         {
             PointerEventData pointerEventData = new PointerEventData(EventSystem) {position = Input.mousePosition};
@@ -93,6 +95,12 @@ namespace Playkids.Match3
             return null;
         }
         
+        /// <summary>
+        /// Attempts to swap pieces on the board
+        /// </summary>
+        /// <param name="pieceView"></param>
+        /// <param name="pressPosition"></param>
+        /// <param name="releasePosition"></param>
         private void ProcessSwap(PieceBehaviour pieceView, Vector3 pressPosition, Vector3 releasePosition)
         {
             Vector2Int dragDirection = GetDragDirection(pressPosition, releasePosition);
@@ -108,6 +116,12 @@ namespace Playkids.Match3
             }
         }
 
+        /// <summary>
+        /// Get the direction of a vector
+        /// </summary>
+        /// <param name="pressPosition"></param>
+        /// <param name="releasePosition"></param>
+        /// <returns></returns>
         private Vector2Int GetDragDirection(Vector2 pressPosition, Vector2 releasePosition)
         {
             Vector3 dragDirection = (pressPosition - releasePosition).normalized;

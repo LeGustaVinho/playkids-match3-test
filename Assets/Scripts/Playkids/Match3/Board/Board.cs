@@ -15,6 +15,7 @@ namespace Playkids.Match3
 
         [ShowInInspector] private readonly Tile[][] tiles;
 
+#if UNITY_EDITOR
         [ShowInInspector]
         private PieceType[,] debugPieceBoard
         {
@@ -33,6 +34,7 @@ namespace Playkids.Match3
                 return pieceBoard;
             }
         }
+#endif
 
         private readonly List<PieceConfig> basicPieces;
         private readonly List<PiecePatternConfig> mergedSortedPiecePatterns = new List<PiecePatternConfig>();
@@ -60,11 +62,22 @@ namespace Playkids.Match3
             }
         }
 
+        /// <summary>
+        /// Get the tile in position
+        /// </summary>
+        /// <param name="position"></param>
+        /// <returns></returns>
         public Tile GetTileAt(Vector2Int position)
         {
             return GetTileAt(position.x, position.y);
         }
 
+        /// <summary>
+        /// Get the tile in position
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
         public Tile GetTileAt(int x, int y)
         {
             if (x >= 0 && x < tiles.Length)
@@ -78,6 +91,7 @@ namespace Playkids.Match3
             return null;
         }
 
+        //Moves the piece to the tile
         public bool MovePieceTo(Piece piece, Tile tile)
         {
             if (!piece.IsPlaced && !tile.HasPiece && tile.CanPutPiece)
@@ -91,7 +105,7 @@ namespace Playkids.Match3
         }
 
         /// <summary>
-        /// 
+        /// Search for patterns on the board
         /// </summary>
         /// <returns></returns>
         public PatternSearchResult FindPatterns()
@@ -181,6 +195,12 @@ namespace Playkids.Match3
             return tiles;
         }
 
+        /// <summary>
+        /// Swap the pieces that are on these tiles
+        /// </summary>
+        /// <param name="t1"></param>
+        /// <param name="t2"></param>
+        /// <returns></returns>
         public bool Swap(Tile t1, Tile t2)
         {
             if (!t1.HasPiece || !t2.HasPiece || !t1.CanPutPiece || !t2.CanPutPiece)
@@ -195,13 +215,14 @@ namespace Playkids.Match3
 
             if (pieceWasMoved)
             {
+                //Checks if there was any match
                 PatternSearchResult patterns = FindPatterns();
                 if (patterns.Matchs.Count > 0)
                 {
                     return true;
                 }
 
-                //Rollback swap
+                //Revert swap because it didn't form any matches
                 piece2 = t1.ReleasePiece();
                 piece1 = t2.ReleasePiece();
                 MovePieceTo(piece1, t1);
@@ -222,6 +243,10 @@ namespace Playkids.Match3
             Swap(t1, t2);
         }
 
+        /// <summary>
+        /// Orchestrates all phases of the board
+        /// </summary>
+        /// <returns></returns>
         [Button]
         public List<BoardChangeLogEntry> RunBoardPhases()
         {
@@ -273,6 +298,11 @@ namespace Playkids.Match3
             return allBoardChanges;
         }
 
+        /// <summary>
+        /// Search for patterns on the board (match patterns and hint patterns).
+        /// </summary>
+        /// <param name="preventShuffle"></param>
+        /// <returns></returns>
         [Button]
         public List<BoardChangeLogEntry> PhasePatternSearch(bool preventShuffle = false)
         {
@@ -294,7 +324,7 @@ namespace Playkids.Match3
                 do
                 {
                     changes.Clear();
-                    if (shuffleCount > MaxShuffles)
+                    if (shuffleCount > MaxShuffles) //Prevents infinite shuffles
                     {
                         changes.Add(new BoardChangeLogEntry(BoardChangeAction.BoardShuffleLimitReached));
                         return changes;
@@ -306,6 +336,7 @@ namespace Playkids.Match3
                     patternSearchResult = FindPatterns();
                     shuffleCount++;
 
+                    //If there is no pattern in this shuffle, revert to the previous state
                     if (patternSearchResult.TotalCount == 0)
                     {
                         RevertShuffle(changes);
@@ -317,27 +348,33 @@ namespace Playkids.Match3
             return changes;
         }
 
+        /// <summary>
+        /// Solve the matchs of the pieces
+        /// </summary>
+        /// <param name="patternSearchResult"></param>
+        /// <returns></returns>
         public List<BoardChangeLogEntry> PhasePatternResolve(PatternSearchResult patternSearchResult)
         {
             List<BoardChangeLogEntry> changes = new List<BoardChangeLogEntry>();
-            if (patternSearchResult.Matchs.Count > 0)
+            foreach (PatternFound match in patternSearchResult.Matchs)
             {
-                foreach (PatternFound match in patternSearchResult.Matchs)
+                changes.Add(new BoardChangeLogEntry(match));
+                foreach (Tile tile in match.Tiles)
                 {
-                    changes.Add(new BoardChangeLogEntry(match));
-                    foreach (Tile tile in match.Tiles)
+                    Piece destroyedPiece = tile.DestroyPiece();
+                    if (destroyedPiece != null)
                     {
-                        Piece destroyedPiece = tile.DestroyPiece();
-                        if (destroyedPiece != null)
-                        {
-                            changes.Add(new BoardChangeLogEntry(tile, destroyedPiece, BoardChangeAction.PieceDestroy));
-                        }
+                        changes.Add(new BoardChangeLogEntry(tile, destroyedPiece, BoardChangeAction.PieceDestroy));
                     }
                 }
             }
             return changes;
         }
 
+        /// <summary>
+        /// Performs gravity on the board pieces
+        /// </summary>
+        /// <returns></returns>
         [Button]
         public List<BoardChangeLogEntry> PhaseGravity()
         {
@@ -359,7 +396,7 @@ namespace Playkids.Match3
             //Group the pieces that will fall into gravity together
             foreach (Tile tileOfPieceWillFall in tilesOfPiecesWillFall)
             {
-                tilesInGravityFlow.Add(tileOfPieceWillFall);
+                tilesInGravityFlow.Add(tileOfPieceWillFall); //this piece will surely fall
                 
                 Tile parentGravitationalTile = tileOfPieceWillFall.GravitationalParent;
                 while (parentGravitationalTile != null)
@@ -407,6 +444,10 @@ namespace Playkids.Match3
             return changes;
         }
 
+        /// <summary>
+        /// Find tiles that have a tile generator
+        /// </summary>
+        /// <returns></returns>
         private Tile[] FindTilesWithPieceGenerator()
         {
             List<Tile> tilesWithPieceGenerator = new List<Tile>();
@@ -418,41 +459,48 @@ namespace Playkids.Match3
             return tilesWithPieceGenerator.ToArray();
         }
 
+        /// <summary>
+        /// Shuffle the board pieces randomly
+        /// </summary>
+        /// <returns></returns>
         public List<BoardChangeLogEntry> ShufflePieces()
         {
             List<BoardChangeLogEntry> changes = new List<BoardChangeLogEntry>();
-            List<Tile> availableTiles = GetAllTilesWithPieces();
+            List<Tile> availableTiles = GetAllTilesWithPieces(); //stores tiles that have not yet been shuffled
 
+            //the algorithm exchanges the pieces in pairs, so if it is odd it is not possible to continue
             while (availableTiles.Count > 1)
             {
-                if (availableTiles.Count < 2)
+                if (availableTiles.Count < 2) //
                 {
                     break;
                 }
 
+                //get first piece randomly
                 int rndIndex1 = Random.Range(0, availableTiles.Count);
                 Tile tile1 = availableTiles[rndIndex1];
                 Piece piece1 = tile1.ReleasePiece();
                 availableTiles.RemoveAt(rndIndex1);
                 
+                //get second piece randomly
                 int rndIndex2 = Random.Range(0, availableTiles.Count);
                 Tile tile2 = availableTiles[rndIndex2];
                 Piece piece2 = tile2.ReleasePiece();
                 availableTiles.RemoveAt(rndIndex2);
 
-                if (MovePieceTo(piece1, tile2) && MovePieceTo(piece2, tile1))
+                if (MovePieceTo(piece1, tile2) && MovePieceTo(piece2, tile1)) //swap positions
                 {
                     changes.Add(new BoardChangeLogEntry(tile1, tile2, piece1, piece2));
-                }
-                else
-                {
-                    Debug.LogError("Shuffle bug");
                 }
             }
 
             return changes;
         }
 
+        /// <summary>
+        /// Get all tiles that contain a piece
+        /// </summary>
+        /// <returns></returns>
         public List<Tile> GetAllTilesWithPieces()
         {
             List<Tile> allTiles = new List<Tile>();
@@ -471,6 +519,10 @@ namespace Playkids.Match3
             return allTiles;
         }
 
+        /// <summary>
+        /// Reverses the movements made by the shuffle
+        /// </summary>
+        /// <param name="shuffleChanges"></param>
         private void RevertShuffle(List<BoardChangeLogEntry> shuffleChanges)
         {
             foreach (BoardChangeLogEntry shuffleChange in shuffleChanges)
@@ -486,6 +538,9 @@ namespace Playkids.Match3
             }
         }
         
+        /// <summary>
+        /// Get all patterns and stores sorted by score
+        /// </summary>
         private void CachePatterns()
         {
             List<PiecePatternConfig> sortedMatchPatterns =
@@ -500,6 +555,10 @@ namespace Playkids.Match3
             mergedSortedPiecePatterns.AddRange(sortedHintPatterns);
         }
 
+        /// <summary>
+        /// Generate a basic piece
+        /// </summary>
+        /// <returns>generated piece</returns>
         private Piece GenerateRandomBasicPiece()
         {
             return new Piece(basicPieces[Random.Range(0, basicPieces.Count)]);

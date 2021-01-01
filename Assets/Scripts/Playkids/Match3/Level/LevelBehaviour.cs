@@ -25,6 +25,10 @@ namespace Playkids.Match3
         private int scoreCurrent;
         private int scoreGoal;
 
+        /// <summary>
+        /// Loads a board of a configuration
+        /// </summary>
+        /// <param name="levelConfig"></param>
         public void LoadLevel(LevelConfig levelConfig)
         {
             currentLevel = levelConfig;
@@ -37,6 +41,9 @@ namespace Playkids.Match3
             UpdateUI();
         }
 
+        /// <summary>
+        /// Restart the board with the current configuration
+        /// </summary>
         public void Restart()
         {
             Dispose();
@@ -63,6 +70,10 @@ namespace Playkids.Match3
             BoardBehaviour.OnShuffleLimitReached -= OnShuffleLimitReached;
         }
 
+        /// <summary>
+        /// When a match is formed on the board
+        /// </summary>
+        /// <param name="patternFound"></param>
         private void OnMatch(PatternFound patternFound)
         {
             scoreCurrent += patternFound.PiecePatternConfig.Score;
@@ -75,7 +86,7 @@ namespace Playkids.Match3
                 UpdateUI();
             }
         }
-
+        
         private void OnShuffleLimitReached()
         {
             StartCoroutine(ShuffleLimitReachedRoutine());

@@ -49,6 +49,10 @@ namespace Playkids.Match3
         private static string TILE_NAME_FORMAT = "[Group] - Tile [{0},{1}]";
         private static string PIECE_NAME_FORMAT = "[Group] - Piece {0} # {1}";
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="boardConfig"></param>
         public void LoadBoard(BoardConfig boardConfig)
         {
             Initialize(new Board(boardConfig));

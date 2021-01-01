@@ -5,8 +5,8 @@ namespace Playkids.Match3
 {
     public class PatternSearchResult
     {
-        public List<PatternFound> Matchs = new List<PatternFound>();
-        public List<PatternFound> Hints = new List<PatternFound>();
+        public readonly List<PatternFound> Matchs = new List<PatternFound>();
+        public readonly List<PatternFound> Hints = new List<PatternFound>();
 
         public int TotalCount => Matchs.Count + Hints.Count;
     }
