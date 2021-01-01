@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55623dab8c4ec9f41bbf0d11ffa5ceca, type: 3}
+  m_Name: LevelDB
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  AllLevels:
+  - {fileID: 11400000, guid: 928b52b434fa7484aa1d7acfab2a324c, type: 2}
+  - {fileID: 11400000, guid: fe0dc0cd66db74d4782353853f4993c3, type: 2}
+  - {fileID: 11400000, guid: 52fdd25d229301b47a5f2dc1d9d592f5, type: 2}
+  - {fileID: 11400000, guid: b65d318e5f8f9934dac1374c988763ac, type: 2}
+  - {fileID: 11400000, guid: 29ba0b9426762eb4ea9d1abe04582f23, type: 2}
+  - {fileID: 11400000, guid: 31455c7c3520dbc4191f0e41bedb2d22, type: 2}

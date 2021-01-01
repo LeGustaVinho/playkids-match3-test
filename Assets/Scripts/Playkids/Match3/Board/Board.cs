@@ -8,7 +8,7 @@ using Random = UnityEngine.Random;
 
 namespace Playkids.Match3
 {
-    public class Board
+    public class Board : IDisposable
     {
         [ShowInInspector] public BoardConfig Config { private set; get; }
         public int MaxShuffles = 5;
@@ -324,6 +324,7 @@ namespace Playkids.Match3
             {
                 foreach (PatternFound match in patternSearchResult.Matchs)
                 {
+                    changes.Add(new BoardChangeLogEntry(match));
                     foreach (Tile tile in match.Tiles)
                     {
                         Piece destroyedPiece = tile.DestroyPiece();
@@ -502,6 +503,11 @@ namespace Playkids.Match3
         private Piece GenerateRandomBasicPiece()
         {
             return new Piece(basicPieces[Random.Range(0, basicPieces.Count)]);
+        }
+
+        public void Dispose()
+        {
+            
         }
     }
 }

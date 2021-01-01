@@ -24,11 +24,11 @@ SpriteAtlasAsset:
     platformSettings: []
     packingSettings:
       serializedVersion: 2
-      padding: 4
+      padding: 8
       blockOffset: 1
       allowAlphaSplitting: 0
       enableRotation: 0
-      enableTightPacking: 1
+      enableTightPacking: 0
     variantMultiplier: 1
     packables:
     - {fileID: 2800000, guid: 57458bdd7dcf8a3468ff890e8a016664, type: 3}
@@ -36,6 +36,7 @@ SpriteAtlasAsset:
     - {fileID: 2800000, guid: 4099f113a4b9a444ba87371f88e47a68, type: 3}
     - {fileID: 2800000, guid: fc3d8d98d7dd35c4bbdee4bf5f4c6ef8, type: 3}
     - {fileID: 2800000, guid: b328e15c4ede2e44b9f3fcd9ca18ed13, type: 3}
+    - {fileID: 2800000, guid: 458aa57401fac97468f3e145d89d6901, type: 3}
     totalSpriteSurfaceArea: 0
     bindAsDefault: 1
     isAtlasV2: 1

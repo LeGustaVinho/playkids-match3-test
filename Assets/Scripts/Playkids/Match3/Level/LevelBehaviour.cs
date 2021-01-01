@@ -1,95 +1,142 @@
 using System;
-using System.Collections.Generic;
+using System.Collections;
+using Playkids.UI;
 using Sirenix.OdinInspector;
-using Sirenix.Serialization;
+using TMPro;
 using UnityEngine;
 
 namespace Playkids.Match3
 {
-    public class LevelBehaviour : SerializedMonoBehaviour
+    public class LevelBehaviour : SerializedMonoBehaviour, IDisposable
     {
-        public BoardConfig BoardConfig;
-        public Guid[,] beforeShuffle;
-        public Guid[,] afterShuffle;
-        public Board Board;
-        public List<BoardChangeLogEntry> Changes = new List<BoardChangeLogEntry>();
-        public PatternSearchResult matches;
+        [Required] public BoardBehaviour BoardBehaviour;
 
-        public Tile TileGetter;
-        public List<Tile> availableTiles;
+        [BoxGroup("UI")] public TextMeshProUGUI ScoreCurrentText;
+        [BoxGroup("UI")] public TextMeshProUGUI ScoreGoalText;
+        [BoxGroup("UI")] public TextMeshProUGUI TimerText;
+        [BoxGroup("UI")] public string TimerFormat = "{0:00}:{1:00}";
+
+        [BoxGroup("UI")] public Animation ShufflingFeedback;
+        [BoxGroup("UI")] public Animation ShufflingLimitReachedFeedback;
+
+        private LevelConfig currentLevel;
+        private DateTime roundExpireDateTime;
+        private Coroutine updateTimerRoutine;
+        private int scoreCurrent;
+        private int scoreGoal;
+
+        public void LoadLevel(LevelConfig levelConfig)
+        {
+            currentLevel = levelConfig;
+            BoardBehaviour.LoadBoard(levelConfig.Board);
+            scoreCurrent = 0;
+            scoreGoal = levelConfig.RequiredScore;
+            roundExpireDateTime = DateTime.Now.AddSeconds(levelConfig.Duration);
+            updateTimerRoutine = StartCoroutine(UpdateTimer());
+
+            UpdateUI();
+        }
+
+        public void Restart()
+        {
+            Dispose();
+            LoadLevel(currentLevel);
+        }
+
+        public void Dispose()
+        {
+            BoardBehaviour.Dispose();
+            StopTimerRoutine();
+        }
 
         private void Start()
         {
-            Board = new Board(BoardConfig);
-            generateGuidMap(Board, ref beforeShuffle);
-
-            UpdatePatternDebug();
+            BoardBehaviour.OnMatch += OnMatch;
+            BoardBehaviour.OnShuffle += OnShuffle;
+            BoardBehaviour.OnShuffleLimitReached += OnShuffleLimitReached;
         }
 
-        [Button]
-        public void UpdatePatternDebug()
+        private void OnDestroy()
         {
-            matches = Board.FindPatterns();
-        }
-        
-        [Button]
-        public void RunBoardPhases()
-        {
-            Changes = Board.RunBoardPhases();
-            generateGuidMap(Board, ref afterShuffle);
+            BoardBehaviour.OnMatch -= OnMatch;
+            BoardBehaviour.OnShuffle -= OnShuffle;
+            BoardBehaviour.OnShuffleLimitReached -= OnShuffleLimitReached;
         }
 
-        private void generateGuidMap(Board board, ref Guid[,] guidMap)
+        private void OnMatch(PatternFound patternFound)
         {
-            guidMap = new Guid[board.Config.BoardSize.x,board.Config.BoardSize.y];
-            
-            for (int i = 0; i < board.Config.BoardSize.x; i++)
+            scoreCurrent += patternFound.PiecePatternConfig.Score;
+            if (scoreCurrent >= scoreGoal)
             {
-                for (int j = 0; j < board.Config.BoardSize.y; j++)
-                {
-                    guidMap[i, j] = board.GetTileAt(i, j).Piece.GUID;
-                }
+                LevelUpRound();
+            }
+            else
+            {
+                UpdateUI();
             }
         }
 
-        [Button]
-        public void GetTileAt(int x, int y)
+        private void OnShuffleLimitReached()
         {
-            TileGetter = Board.GetTileAt(x, y);
+            StartCoroutine(ShuffleLimitReachedRoutine());
         }
 
-        [Button]
-        public void ShufflePieces()
+        private void OnShuffle()
         {
-            List<BoardChangeLogEntry> changes = new List<BoardChangeLogEntry>();
+            ShufflingFeedback.Play();
+        }
 
-            if (availableTiles == null)
+        private IEnumerator ShuffleLimitReachedRoutine()
+        {
+            ShufflingLimitReachedFeedback.Play();
+
+            yield return new WaitUntil(() => !ShufflingLimitReachedFeedback.isPlaying);
+
+            StopTimerRoutine();
+            UIController.Instance.GoTo(ScreenType.EndGame);
+        }
+
+        private IEnumerator UpdateTimer()
+        {
+            TimeSpan timeToExpire = roundExpireDateTime - DateTime.Now;
+
+            if (timeToExpire.TotalSeconds > 0)
             {
-                availableTiles = Board.GetAllTilesWithPieces();
-            }
+                TimerText.text = string.Format(TimerFormat,
+                    timeToExpire.Minutes,
+                    timeToExpire.Seconds);
 
-            if(availableTiles.Count > 1)
+                yield return new WaitForSeconds(1);
+
+                updateTimerRoutine = StartCoroutine(UpdateTimer());
+            }
+            else
             {
-                int rndIndex1 = UnityEngine.Random.Range(0, availableTiles.Count);
-                Tile tile1 = availableTiles[rndIndex1];
-                Piece piece1 = tile1.ReleasePiece();
-                availableTiles.RemoveAt(rndIndex1);
-
-                int rndIndex2 = UnityEngine.Random.Range(0, availableTiles.Count);
-                Tile tile2 = availableTiles[rndIndex2];
-                Piece piece2 = tile2.ReleasePiece();
-                availableTiles.RemoveAt(rndIndex2);
-
-                if (Board.MovePieceTo(piece1, tile2) && Board.MovePieceTo(piece2, tile1))
-                {
-                    changes.Add(new BoardChangeLogEntry(tile1, tile2, piece1));
-                    changes.Add(new BoardChangeLogEntry(tile2, tile1, piece2));
-                }
+                UIController.Instance.GoTo(ScreenType.EndGame);
             }
+        }
 
-            Changes.AddRange(changes);
+        private void LevelUpRound()
+        {
+            roundExpireDateTime = DateTime.Now.AddSeconds(currentLevel.Duration);
+            scoreGoal += currentLevel.ScoreAddAfterRound;
 
-            generateGuidMap(Board, ref afterShuffle);
+            UpdateUI();
+        }
+
+        private void StopTimerRoutine()
+        {
+            if (updateTimerRoutine != null)
+            {
+                StopCoroutine(updateTimerRoutine);
+                updateTimerRoutine = null;
+            }
+        }
+
+        private void UpdateUI()
+        {
+            ScoreCurrentText.text = scoreCurrent.ToString();
+            ScoreGoalText.text = scoreGoal.ToString();
         }
     }
 }

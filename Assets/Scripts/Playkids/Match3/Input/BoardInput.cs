@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Playkids.Match3
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class BoardInput : MonoBehaviour
     {
         public GraphicRaycaster GraphicRaycaster;
@@ -49,6 +50,28 @@ namespace Playkids.Match3
         
         private void MobileInput()
         {
+            if (Input.touches.Length > 0)
+            {
+                Touch touchInput = Input.GetTouch(0);
+                if (touchInput.phase == TouchPhase.Began || touchInput.phase == TouchPhase.Began)
+                {
+                    selectedPiece = TryGetPieceWithRaycast(touchInput.position);
+                    if (selectedPiece != null)
+                    {
+                        isMoving = true;
+                        startPosition = touchInput.position;
+                    }
+                }
+
+                if (touchInput.phase == TouchPhase.Ended && isMoving)
+                {
+                    ProcessSwap(selectedPiece, startPosition, touchInput.position);
+
+                    startPosition = Vector3.zero;
+                    selectedPiece = null;
+                    isMoving = false;
+                }
+            }
         }
 
         private PieceBehaviour TryGetPieceWithRaycast(Vector3 raycastPosition)

@@ -7,6 +7,21 @@
       "dependencies": {},
       "hash": "3152612e31abb6c1d0d1bf964924f997e6b7458b"
     },
+    "com.legustavinho.legendary-tools-ui": {
+      "version": "https://github.com/LeGustaVinho/legendary-tools-ui.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.legustavinho.legendary-tools-common": "https://github.com/LeGustaVinho/legendary-tools-common.git"
+      },
+      "hash": "f848ccf85e0535ad497252791b842144a3ecf4ce"
+    },
+    "com.unity.2d.sprite": {
+      "version": "1.0.0",
+      "depth": 0,
+      "source": "builtin",
+      "dependencies": {}
+    },
     "com.unity.ext.nunit": {
       "version": "1.0.6",
       "depth": 1,

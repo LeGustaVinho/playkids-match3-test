@@ -11,18 +11,22 @@ namespace Playkids.Match3
         BoardShuffleLimitReached,
         PhaseTransition,
         PieceMoveShuffle,
+        PieceMatch,
     }
     
     public class BoardChangeLogEntry
     {
-        public Tile FromTile;
-        public Tile ToTile;
+        public Tile FromTile { private set; get; }
+        public Tile ToTile { private set; get; }
         
-        public Piece FromPiece;
-        public Piece ToPiece;
+        public Piece FromPiece { private set; get; }
+        public Piece ToPiece { private set; get; }
         
         [ShowInInspector]
         public Piece Piece { private set; get; }
+
+        public PatternFound PieceMatchPattern { private set; get; }
+        
         [ShowInInspector]
         public BoardChangeAction Action { private set; get; }
 
@@ -48,6 +52,12 @@ namespace Playkids.Match3
             ToTile = toTile;
             Piece = piece;
             Action = action;
+        }
+        
+        public BoardChangeLogEntry(PatternFound pieceMatchPattern)
+        {
+            PieceMatchPattern = pieceMatchPattern;
+            Action = BoardChangeAction.PieceMatch;
         }
         
         public BoardChangeLogEntry(BoardChangeAction action)
