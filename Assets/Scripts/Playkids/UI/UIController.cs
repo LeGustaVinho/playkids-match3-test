@@ -46,35 +46,44 @@ namespace Playkids.UI
             screenTransitionRoutine = StartCoroutine(goTo(type, args));
         }
 
+        /// <summary>
+        /// Transit to a screen
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
         private IEnumerator goTo(ScreenType type, object args = null)
         {
             if (!screensLookup.TryGetValue(type, out UIScreen targetScreen))
             {
-                yield break;
+                yield break; //Screen not found
             }
             
             if (baseScreen != null)
             {
-                while (popups.Count > 0)
-                {
-                    UIScreen popUpScreen = popups.Pop();
-                    yield return StartCoroutine(popUpScreen.HideRoutine(args));
-                    popUpScreen.OnHide(args);
-                    popUpScreen.gameObject.SetActive(false);
-                }
-
                 if (targetScreen.IsPopup)
                 {
                     popups.Push(targetScreen);
                 }
                 else
                 {
+                    //Close all popups
+                    while (popups.Count > 0)
+                    {
+                        UIScreen popUpScreen = popups.Pop();
+                        yield return StartCoroutine(popUpScreen.HideRoutine(args));
+                        popUpScreen.OnHide(args);
+                        popUpScreen.gameObject.SetActive(false);
+                    }
+                    
+                    //Close current screen
                     yield return StartCoroutine(baseScreen.HideRoutine(args));
                     baseScreen.OnHide(args);
                     baseScreen.gameObject.SetActive(false);
                     baseScreen = targetScreen;
                 }
                 
+                //Open new screen
                 targetScreen.gameObject.SetActive(true);
                 yield return StartCoroutine(targetScreen.ShowRoutine(args));
                 targetScreen.OnShow(args);
