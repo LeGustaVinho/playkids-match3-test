@@ -12,9 +12,54 @@ MonoBehaviour:
   m_Script: {fileID: 1726182683, guid: a4865f1ab4504ed8a368670db22f409c, type: 3}
   m_Name: AOTGenerationConfig
   m_EditorClassIdentifier: 
-  automateBeforeBuilds: 1
-  deleteDllAfterBuilds: 1
-  AutomateForAllAOTPlatforms: 1
+  automateBeforeBuilds: 0
+  deleteDllAfterBuilds: 0
+  AutomateForAllAOTPlatforms: 0
   automateForPlatforms: 0900000014000000
-  lastScan: 0
-  supportSerializedTypes: []
+  lastScan: 637452028918495899
+  supportSerializedTypes:
+  - TypeName: System.Boolean, mscorlib
+    IsCustom: 0
+    Emit: 1
+  - TypeName: System.Boolean[,], mscorlib
+    IsCustom: 0
+    Emit: 1
+  - TypeName: System.Collections.Generic.Dictionary`2[[Playkids.Match3.PieceType,
+      Assembly-CSharp],[Playkids.Match3.PieceConfig, Assembly-CSharp]], mscorlib
+    IsCustom: 0
+    Emit: 1
+  - TypeName: System.Collections.Generic.EnumEqualityComparer`1[[Playkids.Match3.PieceType,
+      Assembly-CSharp]], mscorlib
+    IsCustom: 0
+    Emit: 1
+  - TypeName: Playkids.Match3.GravityDirection, Assembly-CSharp
+    IsCustom: 0
+    Emit: 1
+  - TypeName: Playkids.Match3.GravityDirection[,], Assembly-CSharp
+    IsCustom: 0
+    Emit: 1
+  - TypeName: System.Collections.Generic.IEqualityComparer`1[[Playkids.Match3.PieceType,
+      Assembly-CSharp]], mscorlib
+    IsCustom: 0
+    Emit: 1
+  - TypeName: Playkids.Match3.PieceConfig, Assembly-CSharp
+    IsCustom: 0
+    Emit: 1
+  - TypeName: Playkids.Match3.PieceGeneratorConfig, Assembly-CSharp
+    IsCustom: 0
+    Emit: 1
+  - TypeName: Playkids.Match3.PieceGeneratorConfig[,], Assembly-CSharp
+    IsCustom: 0
+    Emit: 1
+  - TypeName: Playkids.Match3.PieceType, Assembly-CSharp
+    IsCustom: 0
+    Emit: 1
+  - TypeName: Playkids.Match3.PieceType[,], Assembly-CSharp
+    IsCustom: 0
+    Emit: 1
+  - TypeName: Playkids.Match3.TileType, Assembly-CSharp
+    IsCustom: 0
+    Emit: 1
+  - TypeName: Playkids.Match3.TileType[,], Assembly-CSharp
+    IsCustom: 0
+    Emit: 1
