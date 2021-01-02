@@ -399,6 +399,7 @@ namespace Playkids.Match3
         
         private IEnumerator TrySwapPieceRoutine(TileBehaviour fromTile, TileBehaviour toTile)
         {
+            acceptingInputs = false;
             Sequence swapSequence = DOTween.Sequence();
             bool swapResult = board.Swap(fromTile.Tile, toTile.Tile);
 
@@ -439,6 +440,7 @@ namespace Playkids.Match3
                 fromTile.PutPiece(piece1View);
                 toTile.PutPiece(piece2View);
             }
+            acceptingInputs = true;
         }
 
         private bool ValidateBoard()
