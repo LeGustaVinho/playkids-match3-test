@@ -10,13 +10,6 @@
 **/[Uu]serSettings/
 **/.[Gg]radle
 
-
-# =========== #
-# Build File #
-# =========== #
-**/*.apk
-**/*.aab
-
 # ===================================== #
 # Visual Studio / MonoDevelop generated #
 # ===================================== #
